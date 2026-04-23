@@ -1,49 +1,53 @@
-# 🚗 CarWash Pro
+# 🚗 CarWash - Gestão de Estética Automotiva Multiunidade
 
-Sistema completo para gestão de estética automotiva, agendamentos e controle financeiro.
-
-> O CarWash é uma solução robusta para empresas que buscam profissionalizar a gestão do pátio e o relacionamento com o cliente. O sistema centraliza desde o agendamento inteligente até relatórios financeiros detalhados.
+O **CarWash** é um sistema ERP web de gestão interna projetado para profissionalizar estabelecimentos de estética automotiva. Ele substitui controles manuais por uma plataforma centralizada que gerencia desde a agenda inteligente até a capacidade operacional de múltiplas filiais.
 
 ---
 
-## ✨ Funcionalidades Identificadas
-
-### 🔐 Autenticação e Segurança
-
-- **Acesso Restrito:** Tela de login para colaboradores e administradores.
-- **Gestão de Credenciais:** Sistema de recuperação de senha e "lembrar-me".
-
-### 📊 Dashboard Administrativo (Visão Geral)
-
-- **Indicadores de Performance (KPIs):** Visualização rápida de atendimentos pendentes e faturamento semanal.
-- **Resumo Mensal:** Métricas de faturamento total e Ticket Médio.
-- **Agenda do Dia:** Listagem dinâmica com status em tempo real (Finalizado, Em andamento, Agendado).
-
-### 🛠️ Módulos de Gestão
-
-- **Agenda:** Controle de horários e serviços de estética.
-- **Gestão de Clientes:** Cadastro completo e histórico de fidelização.
-- **Frota/Veículos:** Controle por modelo e placa (ex: Civic, Corolla, Hilux).
-- **Serviços:** Catálogo de lavagens e estética automotiva.
-- **Financeiro:** Acompanhamento de receitas e despesas.
-
-### 🎨 Interface (UI/UX)
-
-O design foi desenvolvido no Figma, focado em:
-
-- **Dark Mode na Autenticação:** Identidade visual moderna e elegante.
-- **Clean Dashboard:** Interface clara para facilitar o uso no dia a dia operacional.
-- **Componentização:** Seguindo padrões modernos de design systems.
+## 🎯 Problemas que Resolvemos
+O sistema foi projetado para atacar diretamente as seguintes dores de negócio:
+* **Desorganização:** Elimina agendamentos via WhatsApp ou papel.
+* **Ociosidade:** Otimiza a agenda com suporte a atendimentos simultâneos.
+* **Conflitos de Frota:** Bloqueia o agendamento do mesmo veículo em horários sobrepostos, mesmo entre filiais diferentes.
+* **Gestão de Capacidade:** Ajuste dinâmico de células de lavagem ativas (1 a 100 por unidade).
 
 ---
 
-## 🛠️ Tecnologias Sugeridas (Stack)
+## ✨ Funcionalidades do MVP
 
-| Camada | Tecnologia |
-|---|---|
-| Frontend | React.js ou Next.js |
-| Estilização | Tailwind CSS ou Styled Components |
-| Ícones | Lucide React / FontAwesome |
+### 📅 Agenda e Operação
+* **Agendamento Inteligente:** Exige seleção de filial e valida conflitos globais de veículos.
+* **Gestão Multiunidade:** Controle individual de capacidade e células por filial.
+* **Responsáveis Vinculados:** Permite que pessoas autorizadas (além do titular) levem o veículo para atendimento.
+
+### 👥 Cadastros e Dados
+* **Clientes e Veículos:** Vínculo obrigatório entre dono e carro, com validação de placa única no sistema.
+* **Catálogo de Serviços:** Definição de preços e tempos de duração estimada para cada tipo de lavagem.
+* **Observações Logísticas:** Registro de estado do veículo e cuidados específicos por atendimento.
+
+### 📊 Gestão e Segurança
+* **Dashboard:** Indicadores de ocupação, faturamento estimado e total de atendimentos.
+* **Segurança:** Autenticação via login/senha, sessões protegidas e tráfego HTTPS.
+* **Temas:** Suporte nativo a Modo Claro e Modo Escuro (Dark Mode).
+
+---
+
+## 🛠️ Stack Tecnológica
+
+| Camada | Tecnologia | Justificativa |
+|---|---|---|
+| **Frontend** | React | Alta performance e componentização para UI responsiva. |
+| **Backend** | .NET (C#) | Robustez para regras de negócio e modelagem POO. |
+| **Banco de Dados** | PostgreSQL | Integridade transacional e consistência de dados (ACID). |
+
+---
+
+## 📂 Estrutura de Documentação Técnica
+O projeto é guiado por 4 documentos fundamentais disponíveis na pasta `/docs`:
+1. **DVP-E:** Visão do Produto, Escopo e priorização MoSCoW.
+2. **DVS:** Estudo de viabilidade técnica, econômica e operacional.
+3. **DRP:** Requisitos funcionais detalhados e critérios de aceitação.
+4. **DAT:** Arquitetura lógica, modelo de dados e infraestrutura.
 
 ---
 
@@ -53,9 +57,11 @@ O design foi desenvolvido no Figma, focado em:
 # Clone este repositório
 $ git clone https://github.com/MatheusMoreira08/CarWash.git
 
-# Instale as dependências
-$ npm install
+# Instale as dependências do Frontend (React)
+$ cd frontend && npm install
 
-# Execute a aplicação
+# Execute a aplicação em modo dev
 $ npm run dev
 ```
+
+---
