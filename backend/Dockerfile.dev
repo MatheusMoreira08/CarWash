@@ -1,0 +1,27 @@
+# syntax=docker/dockerfile:1.7
+# Backend .NET 8 — desenvolvimento com hot reload (dotnet watch)
+# Usado APENAS pelo docker-compose.dev.yml (bind mount + reload)
+
+ARG DOTNET_VERSION=8.0
+
+FROM mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION}
+WORKDIR /src
+
+# Polling para que o watch funcione com bind mount em WSL/macOS
+ENV DOTNET_USE_POLLING_FILE_WATCHER=1 \
+    ASPNETCORE_ENVIRONMENT=Development \
+    ASPNETCORE_URLS=http://0.0.0.0:8080 \
+    DOTNET_RUNNING_IN_CONTAINER=true
+
+# dotnet-ef disponível para o dev rodar migrations manualmente quando precisar
+RUN dotnet tool install --global dotnet-ef --version ${DOTNET_VERSION}.* \
+    && ln -s /root/.dotnet/tools/dotnet-ef /usr/local/bin/dotnet-ef
+ENV PATH="/root/.dotnet/tools:${PATH}"
+
+EXPOSE 8080
+
+# O código é montado via bind mount no compose.dev — não copiar nada aqui
+ENTRYPOINT ["dotnet", "watch", "run", \
+    "--project", "src/CarWash.Api/CarWash.Api.csproj", \
+    "--no-launch-profile", \
+    "--non-interactive"]
