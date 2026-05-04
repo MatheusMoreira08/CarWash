@@ -1,0 +1,48 @@
+# docker-compose.hom.yml — homologação (DAT §8.1)
+# Uso: docker compose -f docker-compose.yml -f docker-compose.hom.yml up -d
+# Características:
+#   - Imagens production-grade
+#   - Proxy nginx com TLS (cert auto-assinado em hom)
+#   - Migrações rodam automaticamente
+#   - DB acessível na rede interna apenas
+#   - Logs persistidos para investigação
+
+services:
+  postgres:
+    # Em hom, expor DB SOMENTE no localhost do host (debug do time)
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./docker/postgres/backups:/backups
+
+  backend:
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
+    environment:
+      ASPNETCORE_ENVIRONMENT: Staging
+      Logging__LogLevel__Default: Information
+      Serilog__MinimumLevel__Default: Information
+    volumes:
+      - backend_logs:/app/logs
+
+  frontend:
+    build:
+      args:
+        VITE_API_URL: ${VITE_API_URL:-/api}
+
+  proxy:
+    environment:
+      NGINX_ENV: homolog
+    volumes:
+      - ./docker/proxy/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/proxy/certs:/etc/nginx/certs:ro
+      - proxy_logs:/var/log/nginx
+
+volumes:
+  backend_logs:
+  proxy_logs:

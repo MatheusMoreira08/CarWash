@@ -1,0 +1,9 @@
+
+# Docker / ambiente
+.env
+.env.dev
+.env.hom
+.env.prod
+docker/proxy/certs/*.crt
+docker/proxy/certs/*.key
+docker/postgres/backups/

@@ -1,0 +1,75 @@
+# docker-compose.prod.yml — produção (DAT §8.1)
+# Uso: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Características:
+#   - restart: always (RNF002 - 95% uptime)
+#   - DB sem porta exposta (acesso só pela rede interna)
+#   - Limites de recursos
+#   - Backup volume montado
+#   - Logs em volume persistente
+
+services:
+  postgres:
+    restart: always
+    # Em produção o DB NÃO expõe porta — acesso apenas via rede interna do compose
+    # Se precisar admin, use: docker exec -it carwash-postgres psql ...
+    ports: !reset []
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./docker/postgres/backups:/backups
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+
+  migrator:
+    restart: "no"
+
+  backend:
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      Logging__LogLevel__Default: Warning
+      Serilog__MinimumLevel__Default: Information
+    volumes:
+      - backend_logs:/app/logs
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+
+  frontend:
+    restart: always
+    build:
+      args:
+        VITE_API_URL: ${VITE_API_URL:-/api}
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.5"
+
+  proxy:
+    restart: always
+    environment:
+      NGINX_ENV: production
+    volumes:
+      - ./docker/proxy/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/proxy/certs:/etc/nginx/certs:ro
+      - proxy_logs:/var/log/nginx
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.5"
+
+volumes:
+  backend_logs:
+  proxy_logs:

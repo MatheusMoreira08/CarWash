@@ -1,0 +1,89 @@
+# Makefile do CarWash — comandos comuns para o time
+# Uso: `make <alvo>`. Sempre rode da raiz do repo.
+
+SHELL := /bin/bash
+
+ENV ?= dev
+COMPOSE_FILES := -f docker-compose.yml -f docker-compose.$(ENV).yml
+COMPOSE := docker compose $(COMPOSE_FILES)
+
+.PHONY: help up down restart logs ps build pull migrate seed shell-back shell-front shell-db backup smoke certs-dev clean
+
+help:
+	@echo "CarWash — comandos disponíveis (ENV=$(ENV))"
+	@echo ""
+	@echo "  make up ENV=dev|hom|prod        sobe o ambiente em segundo plano"
+	@echo "  make down ENV=...               derruba mantendo volumes"
+	@echo "  make restart ENV=...            reinicia"
+	@echo "  make logs ENV=... [SVC=backend] segue logs"
+	@echo "  make ps ENV=...                 status dos containers"
+	@echo "  make build ENV=...              rebuild das imagens"
+	@echo "  make migrate ENV=...            aplica migrations EF Core (dev sob demanda)"
+	@echo "  make smoke ENV=...              smoke test pós-deploy (DAT §8.2)"
+	@echo "  make backup ENV=hom|prod        dump do PostgreSQL para docker/postgres/backups"
+	@echo "  make certs-dev                  gera cert auto-assinado para hom local"
+	@echo "  make shell-back|shell-front|shell-db   abre shell no container"
+	@echo "  make clean                      remove containers, volumes e redes (CUIDADO)"
+
+up:
+	$(COMPOSE) up -d --build
+
+down:
+	$(COMPOSE) down
+
+restart:
+	$(COMPOSE) restart $(SVC)
+
+logs:
+	$(COMPOSE) logs -f $(SVC)
+
+ps:
+	$(COMPOSE) ps
+
+build:
+	$(COMPOSE) build --pull
+
+pull:
+	$(COMPOSE) pull
+
+# Em dev, migrator está em profile "manual"; em hom/prod sobe automático no `up`
+migrate:
+	$(COMPOSE) run --rm migrator
+
+shell-back:
+	$(COMPOSE) exec backend /bin/bash || $(COMPOSE) exec backend /bin/sh
+
+shell-front:
+	$(COMPOSE) exec frontend /bin/sh
+
+shell-db:
+	$(COMPOSE) exec postgres psql -U $${POSTGRES_USER:-carwash_owner} -d $${POSTGRES_DB:-carwash}
+
+backup:
+	@mkdir -p docker/postgres/backups
+	$(COMPOSE) exec -T postgres pg_dump -U $${POSTGRES_USER:-carwash_owner} -d $${POSTGRES_DB:-carwash} \
+	  | gzip > docker/postgres/backups/carwash-$$(date +%Y%m%d-%H%M%S).sql.gz
+	@echo "Backup salvo em docker/postgres/backups/"
+
+# Smoke test pós-deploy — verifica /health do backend e index do front (DAT §8.2)
+smoke:
+	@echo "→ /health do backend..."
+	@docker compose $(COMPOSE_FILES) exec -T backend wget -qO- http://localhost:8080/health \
+	  || (echo "FALHOU: backend /health" && exit 1)
+	@echo ""
+	@echo "→ index do frontend..."
+	@docker compose $(COMPOSE_FILES) exec -T frontend wget -qO- http://localhost:8080/ > /dev/null \
+	  || (echo "FALHOU: frontend index" && exit 1)
+	@echo "Smoke OK."
+
+# Cert auto-assinado para hom local (NÃO usar em produção)
+certs-dev:
+	@mkdir -p docker/proxy/certs
+	@openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+	  -keyout docker/proxy/certs/server.key \
+	  -out docker/proxy/certs/server.crt \
+	  -subj "/C=BR/ST=SP/L=Local/O=CarWash/CN=carwash.local"
+	@echo "Cert auto-assinado gerado em docker/proxy/certs/"
+
+clean:
+	$(COMPOSE) down -v --remove-orphans

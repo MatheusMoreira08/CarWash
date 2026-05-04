@@ -1,0 +1,101 @@
+# docker-compose base — definições comuns para dev/hom/prod
+# Use sempre com -f docker-compose.yml -f docker-compose.<ambiente>.yml
+# Atende: DAT §8.1 (3 ambientes), §8.2 (deploy), §5.3 (backup), §3.2 (stack)
+
+name: carwash
+
+networks:
+  public:
+    driver: bridge
+  internal:
+    driver: bridge
+    internal: true   # rede sem saída para a internet — DB nunca exposto
+
+volumes:
+  pgdata:
+    name: carwash_pgdata
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: carwash-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-carwash}
+      POSTGRES_USER: ${POSTGRES_USER:-carwash_owner}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?precisa estar em .env}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-carwash_owner} -d ${POSTGRES_DB:-carwash}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - internal
+
+  migrator:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: migrator
+    container_name: carwash-migrator
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ConnectionStrings__Default: "Host=postgres;Port=5432;Database=${POSTGRES_DB:-carwash};Username=${POSTGRES_USER:-carwash_owner};Password=${POSTGRES_PASSWORD}"
+    networks:
+      - internal
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: carwash-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+      ConnectionStrings__Default: "Host=postgres;Port=5432;Database=${POSTGRES_DB:-carwash};Username=${POSTGRES_USER:-carwash_owner};Password=${POSTGRES_PASSWORD}"
+      Jwt__Secret: ${JWT_SECRET:?precisa estar em .env}
+      Jwt__Issuer: ${JWT_ISSUER:-carwash}
+      Jwt__Audience: ${JWT_AUDIENCE:-carwash-web}
+    networks:
+      - internal
+      - public
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-/api}
+    container_name: carwash-frontend
+    restart: unless-stopped
+    networks:
+      - public
+
+  proxy:
+    image: nginx:1.27-alpine
+    container_name: carwash-proxy
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    volumes:
+      - ./docker/proxy/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/proxy/certs:/etc/nginx/certs:ro
+    ports:
+      - "${PROXY_HTTP_PORT:-80}:80"
+      - "${PROXY_HTTPS_PORT:-443}:443"
+    networks:
+      - public
