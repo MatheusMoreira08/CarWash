@@ -1,0 +1,40 @@
+<Project>
+  <!--
+    Configuração comum a TODOS os projetos sob backend/.
+    Aplicada automaticamente pelo MSBuild — não precisa importar manualmente.
+    DAT §3, §4, §6 (segurança), §10 (riscos técnicos).
+  -->
+  <PropertyGroup>
+    <!-- Linguagem e runtime -->
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- Análise estática e qualidade -->
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <AnalysisMode>AllEnabledByDefault</AnalysisMode>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+
+    <!-- Warnings viram erros em CI/Release; em Debug ficam warnings para não atrapalhar dev -->
+    <TreatWarningsAsErrors Condition="'$(Configuration)'=='Release'">true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+    <NoWarn>$(NoWarn);CA1014</NoWarn>
+
+    <!-- Reprodutibilidade -->
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)'=='true'">true</ContinuousIntegrationBuild>
+
+    <!-- Segurança/diagnóstico -->
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <!-- Pacotes comuns a todos os projetos: analisadores -->
+  <ItemGroup>
+    <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556" PrivateAssets="all" />
+    <PackageReference Include="Roslynator.Analyzers" Version="4.12.9" PrivateAssets="all" />
+    <PackageReference Include="SonarAnalyzer.CSharp" Version="10.4.0.108396" PrivateAssets="all" />
+  </ItemGroup>
+</Project>
