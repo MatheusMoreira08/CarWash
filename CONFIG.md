@@ -38,9 +38,21 @@ Este documento é um **passo a passo** para você configurar tudo que **não dá
 
 ---
 
-## 2. Branch protection — `main`
+## 2. Branch protection — `main`, `homolog`, `development`
 
 **Caminho:** `Settings` → `Branches` → `Add branch ruleset` (ou **Branch protection rules** → `Add rule`)
+
+> **Modelo de promoção alinhado ao DAT §8.1 (3 ambientes):**
+>
+> ```
+>   feature/* ──PR──▶ development ──PR──▶ homolog ──PR──▶ main
+>      (dev local)    (deploy dev)        (deploy hom)    (deploy prod)
+> ```
+>
+> Cada branch protegida exige PR + CI verde + aprovação. Gates ficam mais
+> rígidos conforme o código se aproxima de produção. **Crie um ruleset por
+> branch protegida**, seguindo as três configurações abaixo (2.1–2.3 para
+> `main`, 2.4 para `homolog`, 2.5 para `development`).
 
 ### 2.1 Identificação
 - [ ] **Branch name pattern:** `main`
@@ -85,6 +97,155 @@ Este documento é um **passo a passo** para você configurar tudo que **não dá
 
 ### 2.3 Salvar
 - [ ] Clique **Create** / **Save changes**.
+
+---
+
+### 2.4 Branch protection — `homolog` (homologação)
+
+**Posição no fluxo:** recebe PR vindo **apenas de `development`**. Após merge, deploy automático em homologação para validação do proprietário (premissa A1).
+
+**Caminho:** `Settings` → `Branches` → `Add branch ruleset`.
+
+#### 2.4.1 Identificação
+
+- [ ] **Branch name pattern:** `homolog`
+- [ ] **Enforcement status:** `Active`
+
+#### 2.4.2 Regras obrigatórias
+
+##### Bypass list — homolog
+
+- [ ] **Vazio.** Nem owner faz push direto.
+
+##### Restrict pushes / Require a pull request before merging — homolog
+
+- [ ] **Required approvals:** `1`
+- [ ] **Dismiss stale pull request approvals when new commits are pushed** — ✅
+- [ ] **Require review from Code Owners** — ✅ (QA é mandatório via CODEOWNERS para PRs com testes)
+- [ ] **Require approval of the most recent reviewable push** — ✅
+- [ ] **Allowed merge methods:** apenas `Squash`.
+
+##### Require status checks to pass before merging — homolog
+
+- [ ] **Require branches to be up to date before merging** — ✅
+- [ ] **Required status checks** (mesmos do `main` — gate de qualidade igual):
+  - `Commits & PR title (Conventional Commits)`
+  - `Frontend (lint • typecheck • test • build)`
+  - `Backend (format • build • test)`
+  - `Docker compose validate`
+  - `Spell check`
+  - `CodeRabbit`
+
+##### Require conversation resolution before merging — homolog
+
+- [ ] ✅
+
+##### Require linear history — homolog
+
+- [ ] ✅
+
+##### Block force pushes — homolog
+
+- [ ] ✅
+
+##### Restrict deletions — homolog
+
+- [ ] ✅
+
+##### Restrict creations (recomendado) — homolog
+
+- [ ] **Restrict creations** — ✅ (somente `development` pode abrir PR para `homolog`).
+  > GitHub não impõe nativamente "PR só de branch X"; reforçamos via job no CI (`branch-source` valida que `head ref == development`).
+
+##### Require signed commits — homolog
+
+- [ ] Opcional.
+
+#### 2.4.3 Salvar
+
+- [ ] Clique **Create**.
+
+---
+
+### 2.5 Branch protection — `development` (integração)
+
+**Posição no fluxo:** recebe PR vindo de **branches feature/fix/etc.**. Após merge, deploy automático em ambiente de desenvolvimento. Gates são mais leves para não atrasar iteração diária do time.
+
+**Caminho:** `Settings` → `Branches` → `Add branch ruleset`.
+
+#### 2.5.1 Identificação
+
+- [ ] **Branch name pattern:** `development`
+- [ ] **Enforcement status:** `Active`
+
+#### 2.5.2 Regras obrigatórias
+
+##### Bypass list — development
+
+- [ ] **Vazio.** Sem push direto, mesmo em integração.
+
+##### Restrict pushes / Require a pull request before merging — development
+
+- [ ] **Required approvals:** `1`
+- [ ] **Dismiss stale pull request approvals when new commits are pushed** — ✅
+- [ ] **Require review from Code Owners** — ❌ DESMARCAR (acelera integração; CODEOWNERS volta a valer em `homolog` e `main`)
+- [ ] **Require approval of the most recent reviewable push** — ✅
+- [ ] **Allowed merge methods:** apenas `Squash`.
+
+##### Require status checks to pass before merging — development
+
+- [ ] **Require branches to be up to date before merging** — ✅
+- [ ] **Required status checks** (mesmos do `main` — qualidade não negocia):
+  - `Commits & PR title (Conventional Commits)`
+  - `Frontend (lint • typecheck • test • build)`
+  - `Backend (format • build • test)`
+  - `Docker compose validate`
+  - `Spell check`
+  - `CodeRabbit`
+
+##### Require conversation resolution before merging — development
+
+- [ ] ✅
+
+##### Require linear history — development
+
+- [ ] ✅
+
+##### Block force pushes — development
+
+- [ ] ✅
+
+##### Restrict deletions — development
+
+- [ ] ✅
+
+##### Require signed commits — development
+
+- [ ] Opcional.
+
+#### 2.5.3 Salvar
+
+- [ ] Clique **Create**.
+
+---
+
+### 2.6 Resumo das diferenças entre as três branches
+
+| Regra                                    | `development`         | `homolog`            | `main`               |
+| ---------------------------------------- | --------------------- | -------------------- | -------------------- |
+| Origem dos PRs                           | feature/fix/chore/... | apenas `development` | apenas `homolog`     |
+| Aprovações exigidas                      | 1                     | 1                    | 1                    |
+| Code Owners obrigatório                  | ❌                    | ✅                   | ✅                   |
+| Status checks (CI completo + CodeRabbit) | ✅                    | ✅                   | ✅                   |
+| Conversation resolution                  | ✅                    | ✅                   | ✅                   |
+| Linear history                           | ✅                    | ✅                   | ✅                   |
+| Block force push / deletion              | ✅                    | ✅                   | ✅                   |
+| Squash merge apenas                      | ✅                    | ✅                   | ✅                   |
+| Restrict creation (origem)               | ❌                    | ✅                   | ✅                   |
+| Deploy automático após merge             | dev                   | hom                  | prod                 |
+| QA obrigatório no review                 | ❌                    | ✅ (via CODEOWNERS)  | ✅ (via CODEOWNERS)  |
+
+> **Observação sobre `Restrict creation`:** GitHub Branch Protection não tem nativamente a regra "PR só pode vir da branch X". A forma de forçar é via job no `ci.yml` que falha quando o `head ref` não é o esperado. Esse job precisa ser adicionado quando `development` e `homolog` forem criadas — abra issue rastreando.
 
 ---
 
@@ -226,10 +387,9 @@ done
 Por enquanto o CI só precisa destes (para o job `docker` validar compose):
 - (Nada obrigatório no momento — os jobs usam valores fake `ci-only`).
 
-Quando integrar deploy/cobertura externa, adicionar:
-- [ ] `CODECOV_TOKEN` — se usar Codecov.
-- [ ] `DOCKER_REGISTRY_USER` / `DOCKER_REGISTRY_TOKEN` — quando publicar imagens.
-- [ ] `JWT_SECRET_PROD` — para deploy real (NÃO o de CI).
+Quando ativar deploy real, adicionar conforme necessidade:
+- [ ] `JWT_SECRET_PROD` — segredo de assinatura JWT em produção (NÃO reutilize o de CI).
+- [ ] `POSTGRES_PASSWORD_PROD` — senha do banco em produção.
 
 ### 6.2 Permissions for GITHUB_TOKEN
 **Caminho:** `Settings` → `Actions` → `General` → `Workflow permissions`
