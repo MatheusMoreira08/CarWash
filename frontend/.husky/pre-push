@@ -1,0 +1,24 @@
+#!/usr/bin/env sh
+# Antes do push: valida nome da branch e roda checagens rápidas no front.
+# CONTRIBUTING.md §1 e §3.
+
+set -e
+
+# 1) Valida nome da branch
+branch="$(git rev-parse --abbrev-ref HEAD)"
+allowed='^(feat|fix|docs|style|refactor|test|chore|build|ci|perf)/[A-Za-z0-9._-]+$'
+if [ "$branch" != "main" ] && ! printf '%s' "$branch" | grep -Eq "$allowed"; then
+  echo "❌ Nome de branch inválido: '$branch'"
+  echo "   Padrão: <tipo>/<id-task>-<slug-kebab>  (ex: feat/RF020-conflito-global)"
+  echo "   Tipos válidos: feat fix docs style refactor test chore build ci perf"
+  exit 1
+fi
+
+# 2) Checagem rápida do front (typecheck + lint)
+if [ -d frontend ]; then
+  cd frontend
+  if [ -f package.json ]; then
+    npm run --silent typecheck
+    npm run --silent lint
+  fi
+fi

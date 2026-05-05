@@ -1,0 +1,181 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+# CodeRabbit — configuração do CarWash.
+# Documenta-se em: https://docs.coderabbit.ai/reference/yaml-template
+# Alinhado a CONTRIBUTING.md, CONFIG.md e aos subagentes em .claude/agents/.
+
+language: pt-BR
+tone_instructions: >
+  Responda sempre em português do Brasil, tom técnico, direto e objetivo.
+  Cite sempre que possível o RF/RN/RNF/CA do DRP, ou a seção do DAT, ao apontar
+  problemas. Trate o CarWash como sistema interno (RN001) — sem sugerir feature
+  pública, marketplace ou pagamento (Won't Have do DVP-E).
+
+early_access: false
+
+reviews:
+  profile: assertive
+  request_changes_workflow: true
+  high_level_summary: true
+  high_level_summary_placeholder: "@coderabbitai resumo"
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - main
+
+  # Ignorar arquivos gerados / lockfiles / build / segredos
+  path_filters:
+    - "!**/node_modules/**"
+    - "!**/dist/**"
+    - "!**/build/**"
+    - "!**/coverage/**"
+    - "!**/bin/**"
+    - "!**/obj/**"
+    - "!**/*.lock"
+    - "!**/package-lock.json"
+    - "!**/pnpm-lock.yaml"
+    - "!**/playwright-report/**"
+    - "!**/test-results/**"
+    - "!**/.vite/**"
+    - "!docker/proxy/certs/**"
+
+  # Instruções específicas por área do monolito
+  path_instructions:
+    - path: "backend/**"
+      instructions: >
+        Backend é Clean Architecture lite (Domain → Application → Infrastructure → API),
+        .NET 8, EF Core + Npgsql, FluentValidation, Serilog (DAT §3, §4).
+        REGRAS DE NEGÓCIO CRÍTICAS (RN003, RN004, RN009, RN010, RN011) DEVEM viver
+        no Domain + banco — NÃO aceitar lógica apenas em controller (RAT03).
+        Exigir validação server-side para todos os DTOs (FluentValidation).
+        Apontar quando faltar log estruturado em login, falha, mudança de status
+        ou exceção (RNF009, DAT §9.1).
+        Sinalizar uso de DateTime.Now em vez de DateTime.UtcNow.
+        Sinalizar string de conexão hardcoded (DAT §8.3).
+        Reforçar uso de CancellationToken em métodos async.
+
+    - path: "backend/**/Migrations/**"
+      instructions: >
+        Migration EF Core. NUNCA editar uma migration já mergeada — sugerir nova
+        migration corretiva. Verificar se constraint/índice corresponde ao RF/RN
+        (RF005 placa única, RF018 células 1–100, RF020 conflito global de veículo).
+        Para RN011/CA006, exigir UNIQUE em (VeiculoId, DataHora) independente de
+        FilialId. Confirmar que campos de data são timestamptz (UTC).
+
+    - path: "backend/**/Domain/**"
+      instructions: >
+        Camada Domain — ZERO dependência externa. Apontar import de EF Core,
+        ASP.NET Core, FluentValidation ou qualquer lib de infra como erro.
+        Entidades devem ter construtor privado e fábrica estática com validação.
+        Value Objects (Placa, CPF, CNPJ, Telefone) imutáveis.
+
+    - path: "frontend/**"
+      instructions: >
+        Frontend React 19 + Vite + TypeScript strict, TanStack Query, React Hook
+        Form + Zod, Tailwind, axios.
+        FRONTEND NUNCA é única defesa de regra de negócio (RAT03) — validações
+        do Zod existem para UX, mas erros 4xx/409 do backend devem ser tratados
+        explicitamente (especialmente 409 para RN011).
+        Apontar uso de any, useEffect para fetch (use TanStack Query),
+        localStorage direto em componente, URL hardcoded (use VITE_API_URL),
+        ausência de loading/empty/error states, falta de label/aria-label,
+        contraste insuficiente (RNF008), mobile quebrado (RNF007).
+        Schemas Zod reutilizáveis devem ficar em src/shared/schemas/.
+
+    - path: "frontend/**/*.test.*"
+      instructions: >
+        Testes Vitest + React Testing Library. Não testar implementação interna —
+        testar comportamento via queries semânticas (getByRole, getByLabelText).
+        Não usar waitForTimeout cego — preferir findBy* ou expect.poll.
+
+    - path: "frontend/**/*.spec.*"
+      instructions: >
+        Testes Playwright (E2E). Cobrir UC001–UC011. Para CA006 (RN011),
+        exigir teste que tenta agendar mesmo veículo em duas filiais e
+        verifica mensagem de conflito visível ao usuário.
+
+    - path: "docker/**"
+      instructions: >
+        Reverse proxy nginx + init Postgres. Verificar headers de segurança
+        (HSTS, X-Frame-Options), TLS 1.2+, redirect HTTP→HTTPS, healthcheck.
+        Postgres init.sql não deve criar role com senha hardcoded.
+
+    - path: "docker-compose*.yml"
+      instructions: >
+        Compose multi-ambiente (dev/hom/prod). Verificar isolamento de rede
+        (DB em rede internal), ausência de porta exposta do DB em prod,
+        healthcheck + depends_on:condition, segredos via env vars (DAT §8.3),
+        usuário não-root, restart policy adequada por ambiente (RNF002).
+
+    - path: "**/Dockerfile*"
+      instructions: >
+        Multi-stage obrigatório, USER não-root no estágio final, HEALTHCHECK
+        no runtime, .dockerignore consistente. Sem segredo no ARG/ENV.
+
+    - path: ".github/workflows/**"
+      instructions: >
+        Validar que jobs têm timeout, permissions mínimas, uso de actions
+        com SHA pinned ou pelo menos major (@v4). Cancelar runs antigos
+        com concurrency. CODECOV/Docker secrets via secrets.* (não hardcoded).
+
+    - path: "docs/**"
+      instructions: >
+        Documentação de produto (DVP-E, DRP, DVS, DAT). Review LIGHTWEIGHT —
+        focar em consistência terminológica (RF, RN, RNF, CA), aderência ao
+        histórico de versões e impacto cruzado (mudança no DRP que afeta DAT).
+        Não sugerir reestruturação ampla sem justificativa de negócio.
+
+    - path: ".claude/agents/**"
+      instructions: >
+        Definições de subagentes do Claude Code. Review LIGHTWEIGHT — verificar
+        consistência entre frontmatter (name, description, tools, model) e
+        instruções, e alinhamento com os outros agentes do time.
+
+    - path: "**/*.md"
+      instructions: >
+        Markdown — checar links quebrados, headings hierárquicos, code blocks
+        com linguagem declarada, e que afirmações sobre o produto coincidam
+        com docs/.
+
+  tools:
+    eslint:
+      enabled: true
+    markdownlint:
+      enabled: true
+    hadolint:
+      enabled: true
+    gitleaks:
+      enabled: true
+    semgrep:
+      enabled: true
+    languagetool:
+      enabled: true
+      enabled_only: false
+      level: default
+      enabled_rules:
+        - SENTENCE_FRAGMENT
+      disabled_rules:
+        - WHITESPACE_RULE
+      enabled_categories:
+        - STYLE
+      disabled_categories: []
+    actionlint:
+      enabled: true
+    yamllint:
+      enabled: true
+
+chat:
+  auto_reply: true
+
+knowledge_base:
+  opt_out: false
+  learnings:
+    scope: auto
+  issues:
+    scope: auto
+  pull_requests:
+    scope: auto

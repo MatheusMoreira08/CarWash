@@ -1,0 +1,21 @@
+# <tipo>(<escopo>): <descrição imperativa, ≤ 72 chars, sem ponto final>
+#
+# tipos:   feat fix docs style refactor test chore build ci perf revert
+# escopos: back front db infra ci docs agents deps auth
+#
+# ───────── BODY (opcional) ─────────
+# Foque no PORQUÊ, não no o quê. Quebre em parágrafos se precisar.
+# Largura ≤ 100 chars por linha.
+#
+#
+# ───────── FOOTER (opcional) ─────────
+# Refs: RF0XX, RN0XX, CA0XX        ← rastreabilidade obrigatória quando aplicável
+# Closes: #123                     ← issue/PR fechado
+# BREAKING CHANGE: <descreva>      ← apenas se quebra contrato (API, schema, env)
+# Co-Authored-By: Nome <email>     ← pareamento ou contribuição compartilhada
+#
+# ───────── checklist mental ─────────
+# [ ] mensagem está no imperativo? ("adiciona", não "adicionado")
+# [ ] um único escopo? (se cruza, divida em commits)
+# [ ] referências a RF/RN/CA presentes quando aplicável?
+# [ ] body explica POR QUÊ, não O QUÊ?
