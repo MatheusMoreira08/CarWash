@@ -1,0 +1,43 @@
+{
+  // Format on save com Prettier (frontend) e dotnet (backend)
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "never"
+  },
+
+  // ESLint flat config
+  "eslint.useFlatConfig": true,
+  "eslint.workingDirectories": [{ "pattern": "./frontend" }],
+  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
+
+  // Prettier — só no frontend
+  "prettier.requireConfig": true,
+  "prettier.configPath": "frontend/.prettierrc.json",
+
+  // C#
+  "[csharp]": {
+    "editor.defaultFormatter": "ms-dotnettools.csharp",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "explicit"
+    }
+  },
+  "omnisharp.enableEditorConfigSupport": true,
+  "omnisharp.enableRoslynAnalyzers": true,
+
+  // Files
+  "files.eol": "\n",
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+  "files.exclude": {
+    "**/bin": true,
+    "**/obj": true,
+    "**/node_modules": true,
+    "**/.vite": true
+  },
+
+  // CSpell
+  "cSpell.enableFiletypes": ["csharp", "typescript", "typescriptreact", "yaml", "dockerfile"]
+}

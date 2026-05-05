@@ -1,0 +1,38 @@
+# Normaliza line endings — evita "diff" falso entre Windows/Linux/macOS (RT3, qualidade)
+* text=auto eol=lf
+
+# C#
+*.cs       text diff=csharp
+*.csproj   text
+*.sln      text eol=crlf
+*.props    text
+*.targets  text
+
+# JS/TS
+*.ts       text
+*.tsx      text
+*.js       text
+*.jsx      text
+*.json     text
+*.html     text
+*.css      text
+*.scss     text
+*.md       text
+
+# Shell / config
+*.sh       text eol=lf
+Dockerfile text
+*.yml      text
+*.yaml     text
+*.toml     text
+
+# Binários — não tentar diff/merge
+*.png      binary
+*.jpg      binary
+*.jpeg     binary
+*.gif      binary
+*.ico      binary
+*.woff     binary
+*.woff2    binary
+*.pdf      binary
+*.zip      binary
