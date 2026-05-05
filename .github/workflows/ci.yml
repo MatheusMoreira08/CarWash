@@ -126,16 +126,8 @@ jobs:
       - name: Build (Release, warnings as errors)
         run: dotnet build --configuration Release --no-restore
 
-      - name: Test (com cobertura)
-        run: dotnet test --configuration Release --no-build --collect:"XPlat Code Coverage" --logger trx
-
-      - name: Upload coverage
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-coverage
-          path: backend/**/TestResults/**/coverage.cobertura.xml
-          if-no-files-found: ignore
+      - name: Test
+        run: dotnet test --configuration Release --no-build
 
   # ─────────────── DOCKER ───────────────
   docker:
