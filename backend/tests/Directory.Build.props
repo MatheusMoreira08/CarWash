@@ -1,0 +1,15 @@
+<Project>
+  <!--
+    Configuração específica para projetos de teste.
+    Herda de backend/Directory.Build.props (root) e adiciona supressões pertinentes.
+  -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <PropertyGroup>
+    <!--
+      Em testes é convenção (xUnit) usar nomes de método com '_' para legibilidade
+      (ex.: GET_health_returns_200_Healthy). Suprimir CA1707 só em testes.
+    -->
+    <NoWarn>$(NoWarn);CA1707;CA1711</NoWarn>
+  </PropertyGroup>
+</Project>
