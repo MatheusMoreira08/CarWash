@@ -1,0 +1,26 @@
+# .NET build outputs
+bin/
+obj/
+*.user
+*.suo
+
+# Test results e coverage
+TestResults/
+[Cc]overage*/
+coverage.*.xml
+coverage.*.json
+*.coverage
+*.coveragexml
+
+# Rider / VS / VS Code (artefatos locais)
+.idea/
+.vs/
+*.userprefs
+
+# NuGet local cache
+*.nupkg
+.nuget/
+
+# Logs gerados em runtime
+logs/
+*.log
