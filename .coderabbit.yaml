@@ -120,7 +120,7 @@ reviews:
       instructions: >
         Validar que jobs têm timeout, permissions mínimas, uso de actions
         com SHA pinned ou pelo menos major (@v4). Cancelar runs antigos
-        com concurrency. CODECOV/Docker secrets via secrets.* (não hardcoded).
+        com concurrency. Segredos sempre via secrets.* (não hardcoded).
 
     - path: "docs/**"
       instructions: >
