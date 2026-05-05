@@ -1,0 +1,51 @@
+# CODEOWNERS — auto-atribui reviewers no PR conforme CONTRIBUTING.md §7.
+# Sintaxe: <padrão> <owner1> <owner2>
+# Owners reais devem ser substituídos por handles do GitHub do time.
+# Placeholders @arquiteto / @dev-back / @dev-front / @qa / @po / @ceo serão
+# trocados quando o time tiver contas associadas.
+
+# Default — qualquer coisa não coberta abaixo
+*                                   @arquiteto
+
+# Backend
+/backend/                           @dev-back @arquiteto
+/backend/Directory.Build.props      @arquiteto
+/backend/Directory.Packages.props   @arquiteto
+/backend/global.json                @arquiteto
+/backend/**/Migrations/             @arquiteto
+
+# Frontend
+/frontend/                          @dev-front @arquiteto
+/frontend/package.json              @dev-front @arquiteto
+/frontend/eslint.config.js          @arquiteto
+/frontend/.prettierrc.json          @arquiteto
+
+# Infraestrutura / Docker / Make
+/docker/                            @arquiteto
+/docker-compose*.yml                @arquiteto
+/Dockerfile*                        @arquiteto
+/Makefile                           @arquiteto
+/.env.example                       @arquiteto
+
+# CI / hooks / lint
+/.github/                           @arquiteto
+/.husky/                            @arquiteto
+/frontend/.husky/                   @arquiteto
+/commitlint.config.cjs              @arquiteto
+/.editorconfig                      @arquiteto
+/.gitattributes                     @arquiteto
+/cspell.json                        @arquiteto
+
+# Documentação de produto
+/docs/                              @po @arquiteto
+/CONTRIBUTING.md                    @arquiteto @po
+/README.md                          @arquiteto @po
+
+# Definições dos subagentes
+/.claude/agents/                    @arquiteto @ceo
+
+# Testes — QA é mandatório nos testes que cobrem CAs críticos
+/backend/tests/                     @qa @dev-back
+/frontend/**/*.test.*               @qa @dev-front
+/frontend/**/*.spec.*               @qa @dev-front
+/frontend/playwright.config.*       @qa @arquiteto
