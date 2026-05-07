@@ -1,17 +1,28 @@
+using CarWash.Application.Interfaces; // <-- 1. Adicionamos o using para achar a interface
+using CarWash.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace CarWash.Infrastructure.Persistence;
 
-public class CarWashDbContext : DbContext
+// <-- 2. Colocamos o ICarWashDbContext aqui do lado do DbContext
+public class CarWashDbContext : DbContext, ICarWashDbContext
 {
     public CarWashDbContext(DbContextOptions<CarWashDbContext> options)
         : base(options)
     {
     }
 
+    public DbSet<User> Users { get; set; }
+
+    public DbSet<Session> Sessions { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("public");
+
+        modelBuilder.ApplyConfigurationsFromAssembly(
+            typeof(CarWashDbContext).Assembly);
+
         base.OnModelCreating(modelBuilder);
     }
 }
